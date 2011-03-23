@@ -4,8 +4,7 @@ Created on Fri Feb 18 20:28:29 2011
 
 @author: ba1224
 
-Generates data for a quasi 2D fermi surface - taken from Patricks' 
-NJPhys review article
+Generates data for a metal fermi surface - taken from Schoenberg
 
 
 """
@@ -25,29 +24,28 @@ def a_torque(b, theta):
     theta = np.deg2rad(theta)
     return b * np.abs(np.sin(theta))
 
-def a_temp(b, theta, m_therm=1, t=sys.float_info.min*1e3):
-    theta = np.deg2rad(theta)
+def a_temp(b, m_therm=1, t=sys.float_info.min*1e3):
     # Precalculate the large constant so that the floats will not underflow
     C = 2 * np.pi**2 * K_BOLTZ * E_MASS / (E_CHARGE * HBAR)
-    X = C * m_therm * t / (b * np.cos(theta))
+    X = C * m_therm * t / (b)
     return X / np.sinh(X)
 
-def a_dingle(b, theta, f, l0=sys.float_info.max*1e-3):
-    return np.exp(-np.pi * np.sqrt(2 * HBAR * f / E_CHARGE) / (l0 * b * np.cos(theta)))
-#    return np.exp(-l0 / b)
+def a_dingle(b, f, l0=sys.float_info.max*1e-3):
+    return np.exp(-np.pi * np.sqrt(2 * HBAR * f / E_CHARGE) / (l0 * b))
 
 def a_mos(b, theta, f, d_theta=0):
-    theta = np.deg2rad(theta)
-    return np.exp(-(np.pi * f * np.sin(theta) * d_theta / (b * np.cos(theta))) ** 2)
+#    theta = np.deg2rad(theta)
+#    return np.exp(-(np.pi * f * np.sin(theta) * d_theta / (b * np.cos(theta))) ** 2)
+    return 1
     
 def a_dop(b, theta, a, d_p=0):
-    theta = np.deg2rad(theta)
-    return np.exp(-(np.pi**2 * HBAR * d_p / (a**2 * E_MASS * b * np.cos(theta)))) 
+#    theta = np.deg2rad(theta)
+#    return np.exp(-(np.pi**2 * HBAR * d_p / (a**2 * E_MASS * b * np.cos(theta)))) 
+    return 1
     
-def a_spin(theta, m_sus=0):
-    theta = np.deg2rad(theta)
+def a_spin(m_sus=0):
     g = 2
-    return np.abs(np.cos(np.pi * g * m_sus / (2 * E_MASS * np.cos(theta))))   
+    return np.abs(np.cos(np.pi * g * m_sus / (2 * E_MASS)))   
     
 def a_warp(b, theta, phi):
     # TODO
@@ -80,8 +78,8 @@ def sim_amplitude(b, f, theta=45, phi=0, t=0.0, m_therm=1, l0=sys.float_info.max
         Defaults chosen so that various terms will equal 1 if not specified
         Warping term not yet implemented, phi therefore does nothing at present
     '''
-    a = a0 * a_torque(b, theta) * a_temp(b, theta, m_therm, t) * a_dingle(b, theta, f, l0) \
-        * a_mos(b, theta, f, d_theta) * a_dop(b, theta, a, d_p) * a_spin(theta, m_sus) \
+    a = a0 * a_torque(b, theta) * a_temp(b, m_therm, t) * a_dingle(b, f, l0) \
+        * a_mos(b, theta, f, d_theta) * a_dop(b, theta, a, d_p) * a_spin(m_sus) \
         * a_warp(b, theta, phi)
     return a
     
@@ -132,7 +130,7 @@ if __name__ == '__main__':
     # Variations in mosaicity
 #    amp = a_mos(b, theta, f)    # Default d_theta = 0
     # Spin susceptibility term
-#    amp = a_spin(theta) * np.ones_like(b)    
+    amp = a_spin() * np.ones_like(b)    
     plot(b, amp)
     show()
 
