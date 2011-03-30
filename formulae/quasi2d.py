@@ -25,16 +25,25 @@ def a_torque(b, theta):
     theta = np.deg2rad(theta)
     return b * np.abs(np.sin(theta))
 
-def a_temp(b, theta, m_therm=1, t=sys.float_info.min*1e3):
+def a_temp(b, theta, m_therm=1, t=0.0):
     theta = np.deg2rad(theta)
     # Precalculate the large constant so that the floats will not underflow
-    C = 2 * np.pi**2 * K_BOLTZ * E_MASS / (E_CHARGE * HBAR * np.cos(theta))
-    X = C * m_therm * t / (b)
-    return X / np.sinh(X)
+    C = 2 * np.pi**2 * K_BOLTZ * E_MASS / (E_CHARGE * HBAR)
+    X = C * m_therm * t / (b * np.cos(theta))
+    # Hack to deal with zero limit
+    if hasattr(X, 'max'):
+        maxX = X.max()
+    else:
+        maxX = X
+    if maxX < (sys.float_info.min * 1e3):
+        return 1
+    else:
+        return X / np.sinh(X)
 
 def a_dingle(b, theta, f, l0=sys.float_info.max*1e-3):
     theta = np.deg2rad(theta)
-    return np.exp(-np.pi * np.sqrt(2 * HBAR * f / E_CHARGE) / (l0 * b * np.cos(theta)))
+    C = HBAR / E_CHARGE
+    return np.exp(-np.pi * np.sqrt(2 * C * f) / (l0 * b * np.cos(theta)))
 
 def a_mos(b, theta, f, d_theta=0):
     theta = np.deg2rad(theta)
@@ -45,8 +54,9 @@ def a_dop(b, theta, a, d_p=0):
     return np.exp(-(np.pi**2 * HBAR * d_p / (a**2 * E_MASS * b * np.cos(theta)))) 
     
 def a_spin(theta, m_sus=0):
+    theta = np.deg2rad(theta)
     g = 2
-    return np.abs(np.cos(np.pi * g * m_sus / (2 * E_MASS * np.cos(theta))))   
+    return np.abs(np.cos(np.pi * g * m_sus / (2 * np.cos(theta))))   
     
 def a_warp(b, theta, phi):
     # TODO

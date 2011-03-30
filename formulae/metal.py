@@ -28,7 +28,15 @@ def a_temp(b, m_therm=1, t=sys.float_info.min*1e3):
     # Precalculate the large constant so that the floats will not underflow
     C = 2 * np.pi**2 * K_BOLTZ * E_MASS / (E_CHARGE * HBAR)
     X = C * m_therm * t / (b)
-    return X / np.sinh(X)
+    # Hack to deal with zero limit
+    if hasattr(X, 'max'):
+        maxX = X.max()
+    else:
+        maxX = X
+    if maxX < (sys.float_info.min * 1e3):
+        return 1
+    else:
+        return X / np.sinh(X)
 
 def a_dingle(b, f, l0=sys.float_info.max*1e-3):
     return np.exp(-np.pi * np.sqrt(2 * HBAR * f / E_CHARGE) / (l0 * b))
